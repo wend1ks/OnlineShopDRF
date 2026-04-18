@@ -1,0 +1,127 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: linear-gradient(to bottom, #12051F, #1A0A2D, #210D38);
+    color: #E9DFFF;
+}
+
+
+.container {
+    width: 100%;
+    max-width: 420px;
+    padding: 35px 30px;
+    border-radius: 16px;        
+    box-sizing: border-box;
+    background: linear-gradient(to bottom, #0C0415, #150825, #1C0B33);
+    box-shadow: 0 0 25px rgba(40, 15, 60, 0.55);
+}
+
+.container h1 {
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 28px;
+    letter-spacing: 1px;
+    color: #F0E6FF;
+}
+.container div {
+    margin-bottom: 18px;
+}
+label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 15px;
+    color: #DCCBFF;
+}
+input:focus, select:focus, textarea:focus {
+    border-color: #7F45CC;
+    box-shadow: 0 0 8px rgba(127, 69, 204, 0.55);
+}
+
+
+.errorlist {
+    margin-top: 5px;
+    color: #FF6D9A;
+    font-size: 13px;
+}
+
+
+button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    background: linear-gradient(to right, #5D2B9B, #7B45C7);
+    color: #E9DFFF;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.25s;
+    font-weight: bold;
+}
+
+button:hover {
+    background: linear-gradient(to right, #6B35B0, #8D55DC);
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+input, select, textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid #2A1648;
+    background-color: #160A24;
+    color: #F3EAFF;
+    font-size: 15px;
+    outline: none;
+    transition: 0.25s;
+}
+
+.page-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 80px); 
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+
+/* Навигация */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background: linear-gradient(to bottom, #12051F, #1A0A2D, #210D38);
+    border-bottom: 3px solid #3E1D63;
+}
+
+.logo a {
+    color: #F0E6FF;
+    font-size: 22px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+}
+
+.nav-links li a {
+    color: #E9DFFF;
+    text-decoration: none;
+    font-size: 16px;
+    padding: 8px 12px;
+    border-radius: 5px;
+    transition: 0.2s;
+}
+
+.nav-links li a:hover {
+    background: #3E1D63;
+    color: white;
+}

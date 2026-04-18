@@ -1,0 +1,89 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel='stylesheet' href="{% static 'css/main.css' %}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{%block title%} Базовая страница {% endblock %}</title>
+    {% block link %}  {% endblock %}
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="{% url 'shop:products_list' %}">OnlineShop✮🎧ྀི♪⋆.✮</a>
+            </div>
+            {{total_price}}
+            <ul class="nav-links">
+
+                {% if request.user.is_authenticated %}
+                    <li><a href="{% url 'shop:products_list' %}">Products</a></li>
+                    <li><a href="#" onclick="goToProfile()">Change Profile</a></li>
+                    <li><a href="{% url 'shop:cart' %}">Cart</a></li>
+                {% endif %}
+
+                {% if request.user.is_seller %}
+                    <li><a href="{% url 'shop:add_product' %}">Add Product</a></li>
+                {% endif %}
+
+                {% if not request.user.is_authenticated %}
+                    <li><a href="{% url 'users:signin_page' %}">Log In</a></li>
+                {% else %}
+                    <li><a href="#" onclick="signOut()">Log Out</a></li>
+                {% endif %}
+
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        {% block content %} {% endblock %}
+    </main>
+    <footer>
+        
+    </footer>
+
+    <script>
+    async function signOut() {
+        try {
+            const response = await fetch('http://127.0.0.1:8000/users/api/signout/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                window.location.href = '/users/signin/';
+            }
+        } catch (error) {
+            alert('Ошибка соединения');
+        }
+    }
+
+    function goToProfile() {
+        window.location.href = '/users/profile/update';
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    </script>
+</body>
+</html>

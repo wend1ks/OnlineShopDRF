@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %} Верификация {% endblock %}
+{% block link %}
+<link rel="stylesheet" href="{% static 'css2/style4.css' %}">
+{% endblock %}
+{% block content %}
+
+<div class="page-center">
+    <form id="code_form">
+        {% csrf_token %}
+        <input type="email" name="email" placeholder="Email" 
+               value="{{ request.session.active_email|default:'' }}" required>
+        <input type="text" name="code" placeholder="код(4 цифры)" maxlength="4" required>
+        <button type="button" onclick="verifyCode()">Подтвердить</button>
+        <button type="button" onclick="resendCode()">Отправить код еще раз</button>
+    </form>
+</div>
+
+<script>
+async function verifyCode(){
+    const form = document.getElementById('code_form');
+    const formData = new FormData(form);
+    
+    try {
+        const response = await fetch('/users/api/verify-code/', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            window.location.href = '/shop/products/';
+        }
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+async function resendCode(){
+    const email = document.querySelector('input[name="email"]').value;
+    
+    if (!email) {
+        alert('Введите email');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/users/api/resend-code/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({email: email})
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert('Новый код отправлен!');
+        } else {
+            alert(data.error);
+        }
+    } catch (error) {
+        alert('Ошибка соединения');
+    }
+}
+</script>
+{% endblock %}

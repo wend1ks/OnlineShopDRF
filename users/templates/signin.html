@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %} Вход {% endblock %}
+{% block link %}
+<link rel="stylesheet" href="{% static 'css2/style2.css' %}">
+{% endblock %}
+{% block content %}
+
+<div class="page-center">
+    <div class="container">
+        <h1>Вход в систему</h1>
+        
+        <form id="SignInForm">
+            {% csrf_token %}
+            <div>
+                <input type="text" name="username" placeholder="Имя пользователя" required>
+            </div>
+            <div>
+                <input type="password" name="password" placeholder="Пароль" required>
+            </div>
+            
+            <button type="button" onclick="SignIn()">Войти</button>
+            
+            <li style="display: flex; justify-content: center;">Еще нет аккаунта?</li>
+            <li style="display: flex; justify-content: center;"><a href="{% url 'users:signup_page' %}">Зарегестрироваться</a></li>
+        </form>
+        
+        <div id="message" style="margin-top: 15px; text-align: center;"></div>
+    </div>
+</div>
+
+<script>
+async function SignIn() {
+    const form = document.getElementById('SignInForm');
+    const formData = new FormData(form);
+    const messageDiv = document.getElementById('message');
+    
+    try {
+        const response = await fetch('/users/api/signin/', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            window.location.href = '{% url "shop:products_list" %}';
+        } else {
+            messageDiv.innerHTML = 'Неверные данные'
+        }
+    }
+    catch(error) {
+        messageDiv.innerHTML = '<p style="color: #FF6D9A;">✗ Ошибка соединения</p>';
+        console.error('Error:', error);
+    }
+}
+</script>
+
+{% endblock %}

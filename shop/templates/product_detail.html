@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %} {{ product.title }} {% endblock %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'css/product_detail.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="product-detail">
+    <!-- <div class="image-box">
+        <img src="{{ product.image.url }}" alt="{{ product.title }}">
+    </div> -->
+
+    <!-- <div class="info-box">
+        <h1>{{ product.title }}</h1>
+        <p class="price">{{ product.price }} Тг</p>
+        <p class="desc">{{ product.description }}</p>
+        <p class="seller">Продавец: {{ product.seller }}</p>
+        <p class="count">Осталось: {{ product.stock_units }} шт</p>
+        <a href="{% url 'shop:products_list' %}" class="btn-back">Назад к товарам</a>
+    </div> -->
+    
+    
+</div>
+<script>
+const productId = window.location.pathname.split('/').filter(Boolean).pop();
+
+async function ProductDetail() {
+    const container = document.querySelector('.product-detail');
+    
+    try {        
+        const response = await fetch(`/shop/api/products/${productId}/`);
+        product = await response.json();
+        
+        console.log('Product:', product);
+        
+        container.innerHTML = '';
+        
+        const card = document.createElement('div');
+        card.className = 'card';
+        
+        card.innerHTML = `
+            <img src="${product.image || '/static/images/no-image.png'}" 
+                 alt="${product.title || 'Product image'}" 
+                 width="350" height="250"
+                 style="object-fit: cover;"
+                 onerror="this.src='/static/images/no-image.png'">
+            <h3>${product.title}</h3>
+            <p>${product.description}</p>
+            <p class="price">${product.price} Тг</p>
+            <p class="count">Осталось: ${product.stock_units} шт</p>
+            <a class="btn-back" href="/shop/products/">Назад</a>
+        `;
+        
+        container.appendChild(card);
+        
+    } catch(error) {
+        console.error(error);
+    }
+}
+    ProductDetail()
+</script>
+{% endblock %}

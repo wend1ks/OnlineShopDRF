@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %} Список продуктов {% endblock %}
+{% block link %} 
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% endblock %}
+
+{% block content %} 
+
+    <div class="container" style="max-width: 1200px;">        
+        <div id="productsContainer" style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
+        </div>
+    </div>
+
+
+<script>
+async function loadProducts() {
+    try {
+        const response = await fetch('/shop/api/products/');
+        const products = await response.json();
+        
+        const container = document.getElementById('productsContainer');
+
+        container.innerHTML = '';
+        
+        products.forEach(product => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.style.width = '400px';
+            
+            card.innerHTML = `
+                <img src="${product.image || ''}" alt="" width="400px" height="300px" 
+                     onerror="this.src='/static/images/no-image.png'">
+                <h1>${product.title}</h1>
+                <p class="desc">${product.description || 'Нет описания'}</p>
+                <p class="price">${product.price} Тг</p>
+                <a class="btn" href="/shop/product/${product.id}/">Детали товара</a>
+                <button class="btn" onclick="toggleCart(${product.id})">
+                    ${product.in_cart ? 'Убрать из корзины' : 'В корзину'}
+                </button>
+            `;
+            
+            container.appendChild(card);
+        });
+        
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('loading').innerHTML = 'Ошибка загрузки';
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+async function toggleCart(productId) {
+    const csrftoken = getCookie('csrftoken');
+    
+    try {
+        const response = await fetch(`/shop/api/cart/toggle/${productId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken
+            }
+        });
+        
+        if (response.ok) {
+            loadProducts();
+        } else if (response.status === 403) {
+            window.location.href = '/users/signin/';
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+loadProducts()
+</script>
+{% endblock %}

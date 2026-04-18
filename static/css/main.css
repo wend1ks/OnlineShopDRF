@@ -1,0 +1,98 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+
+:root {
+  --bg: #0f0b1a;
+  --card: rgba(255,255,255,0.05);
+  --accent: #8b5cf6;
+  --accent2: #c084fc;
+  --text: #f9fafb;
+}
+
+* {
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Inter',sans-serif;
+}
+
+body {
+  background: radial-gradient(circle at top, #1a1330, #0f0b1a);
+  color: var(--text);
+}
+
+.container {
+  max-width:1200px;
+  margin:auto;
+  padding:30px 20px;
+}
+
+.navbar {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:15px 25px;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(12px);
+  border-radius:16px;
+  margin-bottom:40px;
+}
+
+.logo {
+  font-weight:600;
+  font-size:22px;
+  background: linear-gradient(45deg, #8b5cf6, #c084fc);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+.grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:25px;
+}
+
+.card {
+  background: var(--card);
+  border-radius:18px;
+  padding:20px;
+  backdrop-filter: blur(15px);
+  transition:0.3s;
+}
+
+.card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow:0 20px 40px rgba(0,0,0,0.6);
+}
+
+.card img {
+  width:100%;
+  border-radius:12px;
+  margin-bottom:15px;
+}
+
+.title {
+  font-size:18px;
+  margin-bottom:8px;
+}
+
+.price {
+  color: var(--accent2);
+  font-weight:600;
+  margin-bottom:12px;
+}
+
+.btn {
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:10px;
+  background: linear-gradient(45deg,#8b5cf6,#c084fc);
+  color:white;
+  cursor:pointer;
+  transition:0.3s;
+}
+
+.btn:hover {
+  opacity:0.85;
+}

@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %} Редактирование профиля {% endblock %}
+{% block link %}
+<link rel="stylesheet" href="{% static 'css2/style.css' %}">
+{% endblock %}
+{% block content %}
+
+<div class="page-center">
+    <div class="container">        
+        <form id="profileForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            {% if user.user_image %}
+            <div class="profile-image-box">
+                <img src="{{ user.user_image.url }}" alt="Аватар" class="profile-image">
+            </div>
+            {% endif %}
+            
+            <div>
+                <label>Имя пользователя:</label>
+                <input type="text" name="username" value="{{ user.username }}" required>
+            </div>
+            
+            <div>
+                <label>Имя:</label>
+                <input type="text" name="first_name" value="{{ user.first_name }}">
+            </div>
+            <div>
+                <label>Фамилия:</label>
+                <input type="text" name="last_name" value="{{ user.last_name }}">
+            </div>
+            <div>
+                <label>Телефон:</label>
+                <input type="text" name="phone_number" value="{{ user.phone_number }}">
+            </div>
+            <div>
+                <label>Аватар:</label>
+                <label class="file-btn">
+                    Выбрать файл
+                    <input type="file" name="user_image" accept="image/*">
+                </label>
+
+            </div>
+            
+            <div>
+                <label>Email:</label>
+                <input type="email" value="{{ user.email }}" disabled>
+                <small>Email нельзя изменить</small>
+            </div>
+            
+            <button type="button" onclick="updateProfile()">Сохранить изменения</button>
+        </form>
+        
+        <div id="message"></div>
+    </div>
+</div>
+
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+async function updateProfile() {
+    const form = document.getElementById('profileForm');
+    const formData = new FormData(form);
+    const csrftoken = getCookie('csrftoken');
+    
+    try {
+        const response = await fetch('/users/api/profile/update/', {
+            method: 'PATCH',
+            headers: {
+                'X-CSRFToken': csrftoken 
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            document.getElementById('message').innerHTML = 'Профиль сохранен'
+        }
+    } catch (error) {
+        alert(data.error)
+    }
+}
+</script>
+
+{% endblock %}

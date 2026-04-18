@@ -1,0 +1,17 @@
+
+{% extends 'base.html' %}
+{% block content %}
+<h1 style="margin-bottom:20px;">Products</h1>
+
+<div class="grid">
+  {% for product in products %}
+  <div class="card">
+    <img src="{{ product.image.url }}">
+    <div class="title">{{ product.name }}</div>
+    <div class="price">{{ product.price }} ₸</div>
+    <button class="btn">Купить</button>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}
