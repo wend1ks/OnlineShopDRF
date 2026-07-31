@@ -38,7 +38,7 @@ ALLOWED_HOSTS = [
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://onlineshopdrf.up.railway.app",
+    "https://onlineshopdrf-production.up.railway.app",
 ]
 
 # Application definition
