@@ -17,7 +17,7 @@ urlpatterns = [
     path('add_product_page', add_product_page, name='add_product'),
     path('product/<int:product_id>/', product_detail, name='add_product'),
     path('cart_page', cart_page, name='cart'),
-
+    
     # оплата    
     path('api/create-order/', CreateOrderView.as_view(), name='api_create_order'),
     path('api/create-checkout-session/<int:order_id>/', CreateCheckoutSessionView.as_view(), name='api_create_checkout_session'),
