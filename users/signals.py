@@ -12,7 +12,7 @@ def send_activation_code(user):
     raw_code = create_activation_for_user(user)
 
     def _after_commit():
-        send_activation_email_task.delay(user.email, user.username, raw_code)
+        send_activation_email_task(user.email, user.username, raw_code)
 
     transaction.on_commit(_after_commit)
     return raw_code
