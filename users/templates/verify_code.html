@@ -1,71 +1,53 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %} Верификация {% endblock %}
-{% block link %}
-<link rel="stylesheet" href="{% static 'css2/style4.css' %}">
-{% endblock %}
+{% block title %}Verify email — Qadam Market{% endblock %}
+{% block link %}<link rel="stylesheet" href="{% static 'css2/account.css' %}">{% endblock %}
 {% block content %}
-
-<div class="page-center">
-    <form id="code_form">
-        {% csrf_token %}
-        <input type="email" name="email" placeholder="Email" 
-               value="{{ request.session.active_email|default:'' }}" required>
-        <input type="text" name="code" placeholder="код(4 цифры)" maxlength="4" required>
-        <button type="button" onclick="verifyCode()">Подтвердить</button>
-        <button type="button" onclick="resendCode()">Отправить код еще раз</button>
-    </form>
-</div>
-
+<section class="verify-page">
+    <div class="verify-card">
+        <a class="verify-logo" href="{% url 'shop:products_list' %}">qadam<span>market</span></a>
+        <div class="verify-icon">✉</div>
+        <p class="verify-kicker">Email verification</p>
+        <h1>Check your inbox</h1>
+        <p class="verify-description">We sent a 4-digit code to your email. Enter it to complete your registration.</p>
+        <form id="codeForm" class="verify-form">
+            {% csrf_token %}
+            <label class="account-field"><span>Email</span><input id="verifyEmail" type="email" name="email" value="{{ request.session.active_email|default:'' }}" placeholder="name@example.com" autocomplete="email" required></label>
+            <input id="fullCode" type="hidden" name="code">
+            <div class="code-label">Verification code</div>
+            <div class="code-inputs" aria-label="Verification code">
+                <input inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" aria-label="First digit"><input inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Second digit"><input inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Third digit"><input inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Fourth digit">
+            </div>
+            <button id="verifyButton" class="account-primary" type="submit">Verify <span>→</span></button>
+            <div id="codeMessage" class="account-message" role="status" aria-live="polite"></div>
+        </form>
+        <div class="resend-row"><span>Didn't receive a code?</span><button id="resendButton" type="button">Resend code</button></div>
+    </div>
+</section>
 <script>
-async function verifyCode(){
-    const form = document.getElementById('code_form');
-    const formData = new FormData(form);
-    
-    try {
-        const response = await fetch('/users/api/verify-code/', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            window.location.href = '/shop/products/';
-        }
-    } catch (error) {
-        alert(error.message);
-    }
-}
-
-async function resendCode(){
-    const email = document.querySelector('input[name="email"]').value;
-    
-    if (!email) {
-        alert('Введите email');
-        return;
-    }
-    
-    try {
-        const response = await fetch('/users/api/resend-code/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            },
-            body: JSON.stringify({email: email})
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            alert('Новый код отправлен!');
-        } else {
-            alert(data.error);
-        }
-    } catch (error) {
-        alert('Ошибка соединения');
-    }
-}
+const codeInputs = [...document.querySelectorAll('.code-inputs input')];
+function syncCode() { document.getElementById('fullCode').value = codeInputs.map(input => input.value).join(''); }
+codeInputs.forEach((input, index) => {
+    input.addEventListener('input', () => { input.value = input.value.replace(/\D/g, '').slice(0, 1); if (input.value && codeInputs[index + 1]) codeInputs[index + 1].focus(); syncCode(); });
+    input.addEventListener('keydown', event => { if (event.key === 'Backspace' && !input.value && codeInputs[index - 1]) codeInputs[index - 1].focus(); });
+    input.addEventListener('paste', event => { const digits = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4); if (!digits) return; event.preventDefault(); digits.split('').forEach((digit, digitIndex) => { if (codeInputs[digitIndex]) codeInputs[digitIndex].value = digit; }); codeInputs[Math.min(digits.length, 4) - 1].focus(); syncCode(); });
+});
+document.getElementById('codeForm').addEventListener('submit', async event => {
+    event.preventDefault(); syncCode(); const form = event.currentTarget, message = document.getElementById('codeMessage'), button = document.getElementById('verifyButton');
+    if (form.code.value.length !== 4) { message.textContent = 'Enter all 4 digits.'; message.className = 'account-message is-error'; return; }
+    button.disabled = true; button.innerHTML = 'Verifying…'; message.textContent = '';
+    try { const response = await fetch('/users/api/verify-code/', {method:'POST', body:new FormData(form)}); const data = await response.json(); if (response.ok) window.location.href = '/shop/products/'; else { message.textContent = data.detail || 'That code did not work. Please try again.'; message.className = 'account-message is-error'; } }
+    catch { message.textContent = 'Could not connect to the server.'; message.className = 'account-message is-error'; }
+    finally { button.disabled = false; button.innerHTML = 'Verify <span>→</span>'; }
+});
+document.getElementById('resendButton').addEventListener('click', async () => {
+    const email = document.getElementById('verifyEmail').value, button = document.getElementById('resendButton'), message = document.getElementById('codeMessage');
+    if (!email) { message.textContent = 'Enter your email to resend the code.'; message.className = 'account-message is-error'; return; }
+    button.disabled = true; button.textContent = 'Sending…';
+    try { const response = await fetch('/users/api/resend-code/', {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':document.querySelector('[name=csrfmiddlewaretoken]').value}, body:JSON.stringify({email})}); const data = await response.json(); message.textContent = response.ok ? 'A new code was sent to your email.' : (data.detail || 'Could not send the code.'); message.className = response.ok ? 'account-message is-success' : 'account-message is-error'; }
+    catch { message.textContent = 'Could not connect to the server.'; message.className = 'account-message is-error'; }
+    finally { button.disabled = false; button.textContent = 'Resend code'; }
+});
+codeInputs[0].focus();
 </script>
 {% endblock %}

@@ -17,7 +17,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         if data['password'] != data['password2']:
-            raise serializers.ValidationError({"password": "Пароли не совпадают"})
+            raise serializers.ValidationError({"password": "Passwords do not match."})
         return data
 
     def create(self, validated_data):
@@ -80,7 +80,7 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         
         if new_password and not current_password:
             raise serializers.ValidationError({
-                "current_password": "Для смены пароля укажите текущий пароль"
+                "current_password": "Enter your current password to change it."
             })
         
         return data
@@ -92,7 +92,7 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         if new_password and current_password:
             if not instance.check_password(current_password):
                 raise serializers.ValidationError({
-                    "current_password": "Неверный текущий пароль"
+                    "current_password": "Incorrect current password."
                 })
             instance.set_password(new_password)
 
@@ -132,17 +132,17 @@ class SimpleUserProfileUpdateSerializer(serializers.ModelSerializer):
         if data.get('new_password') or data.get('current_password'):
             if not data.get('current_password'):
                 raise serializers.ValidationError({
-                    "current_password": "Текущий пароль обязателен для смены пароля"
+                    "current_password": "Current password is required to change your password."
                 })
             
             if not data.get('new_password'):
                 raise serializers.ValidationError({
-                    "new_password": "Новый пароль обязателен для смены пароля"
+                    "new_password": "New password is required."
                 })
             
             if data.get('new_password') != data.get('confirm_password'):
                 raise serializers.ValidationError({
-                    "confirm_password": "Пароли не совпадают"
+                    "confirm_password": "Passwords do not match."
                 })
         
         return data
@@ -155,7 +155,7 @@ class SimpleUserProfileUpdateSerializer(serializers.ModelSerializer):
         if current_password and new_password:
             if not instance.check_password(current_password):
                 raise serializers.ValidationError({
-                    "current_password": "Неверный текущий пароль"
+                    "current_password": "Incorrect current password."
                 })
             
             instance.set_password(new_password)

@@ -29,7 +29,7 @@ class SignUpAPIView(APIView):
             
             return Response({
                 'status': 'success',
-                'message': 'Пользователь создан. Код активации отправлен на email.',
+                'message': 'User created. A verification code was sent by email.',
                 'user_id': user.id,
                 'email': user.email
             })
@@ -49,21 +49,21 @@ class VerifyCodeAPIView(APIView):
         user = CustomUser.objects.filter(email=email).order_by('-date_joined').first()
         
         if not user:
-            return Response({'detail': 'Пользователь с таким email не найден'}, status=400)
+            return Response({'detail': 'No user found with this email address.'}, status=400)
 
         payload = get_activation(user)
         if not payload:
-            return Response({'detail': 'Код активации не найден или срок действия истек'}, status=400)
+            return Response({'detail': 'Verification code not found or expired.'}, status=400)
 
         max_attempts = int(getattr(settings, 'ACTIVATION_CODE_MAX_ATTEMPTS', 5))
         if payload.attempts >= max_attempts:
             consume_activation(user)
-            return Response({'detail': 'Слишком много попыток'}, status=400)
+            return Response({'detail': 'Too many attempts.'}, status=400)
 
         if payload.code != code:
             payload = bump_attempts(user)
             attempts_left = max(0, max_attempts - (payload.attempts if payload else max_attempts))
-            return Response({'detail': f'Неверный код. Осталось попыток: {attempts_left}'}, status=400)
+            return Response({'detail': f'Invalid code. Attempts remaining: {attempts_left}'}, status=400)
 
         consume_activation(user)
         
@@ -90,12 +90,12 @@ class ResendCodeAPIView(APIView):
         email = request.data.get("email")
         
         if not email:
-            return Response({'detail': 'Email обязателен'}, status=400)
+            return Response({'detail': 'Email is required.'}, status=400)
         
         user = CustomUser.objects.filter(email=email).order_by('-date_joined').first()
         
         if not user:
-            return Response({'detail': 'Пользователь не найден'}, status=400)
+            return Response({'detail': 'User not found.'}, status=400)
         
         send_activation_code(user)
         
@@ -135,7 +135,7 @@ class SignInAPIView(APIView):
             if user is not None:
                 login(request, user)
                 return Response({'user_id': user.id, 'username': user.username})
-            return Response({'detail': 'Неверные учетные данные'}, status=401)
+            return Response({'detail': 'Invalid credentials.'}, status=401)
         return Response(serializer.errors, status=400)
 
 class SignOutAPIView(APIView):

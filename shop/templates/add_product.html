@@ -1,60 +1,57 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %} Добавление продукта {% endblock %}
+{% block title %}Add a product{% endblock %}
 {% block link %}
 <link rel="stylesheet" href="{% static 'css/style2.css' %}">
 {% endblock %}
-
 {% block content %}
-<div class="page-center">
-    <div class="form-wrapper">
-        <h1>Добавление продукта</h1>
-
-        <form id="productForm" enctype="multipart/form-data">
-            {% csrf_token %}
-            
-            <div class="form-field">
-                <label>Название товара</label>
-                <input type="text" name="title" required>
+<div class="add-product-page">
+    <section class="product-form-panel">
+        <div class="product-form-panel__intro">
+            <p class="product-form-panel__eyebrow"><span></span> Seller dashboard</p>
+            <h1>Add a product<br><em>to your store</em></h1>
+            <p>Complete the listing and shoppers will see it in the catalog as soon as it is published.</p>
+        </div>
+        <form id="productForm" class="product-form" enctype="multipart/form-data">
+            <div class="product-form__heading">
+                <div class="product-form__icon">＋</div>
+                <div><h2>New product</h2><p>Enter the key details</p></div>
             </div>
-            
-            <div class="form-field">
-                <label>Категория</label>
+            {% csrf_token %}
+            <div class="form-field form-field--wide">
+                <label>Product name</label>
+                <input type="text" name="title" placeholder="For example, Urban Run sneakers" required>
+            </div>
+            <div class="form-field form-field--wide">
+                <label>Category</label>
                 <select name="category" id="categorySelect" required>
-                    <option value="">Выберите категорию</option>
+                    <option value="">Select a category</option>
                 </select>
             </div>
-            
-            <div class="form-field">
-                <label>Описание</label>
-                <textarea name="description" rows="5" required></textarea>
+            <div class="form-field form-field--wide">
+                <label>Description</label>
+                <textarea name="description" rows="5" placeholder="Tell shoppers about materials, features, and what is included…" required></textarea>
             </div>
-            
-            <div class="form-field">
-                <label>Фото товара</label>
+            <div class="form-field form-field--wide">
+                <label>Product photo</label>
                 <label class="file-label">
-                    Загрузить фото
+                    <span class="file-label__icon">⇧</span><span><b>Upload photo</b><small>JPG, PNG, or WEBP up to 10 MB</small></span>
                     <input type="file" name="image" accept="image/*" required>
                 </label>
             </div>
-            
             <div class="form-field">
-                <label>Количество</label>
+                <label>Quantity</label>
                 <input type="number" name="stock_units" min="0" value="1" required>
             </div>
-            
             <div class="form-field">
-                <label>Цена (₸)</label>
+                <label>Price ($)</label>
                 <input type="number" name="price" min="100" step="0.01" required>
             </div>
-            
-            <button type="button" class="btn-submit" onclick="addProduct()">Добавить</button>
+            <button type="button" class="btn btn-primary" onclick="addProduct()">Publish product <span>→</span></button>
+            <div id="message" class="message"></div>
         </form>
-        
-        <div id="message" class="message"></div>
-    </div>
+    </section>
 </div>
-
 <script>
 function getCookie(name) {
     let cookieValue = null;
@@ -76,35 +73,34 @@ async function addProduct() {
     const formData = new FormData(form);
     const csrftoken = getCookie('csrftoken');
     const messageDiv = document.getElementById('message');
-    
 
     const title = formData.get('title');
     const special = ['!', '@', '$', '#', '%', '^', '&', '*', '(', ')', '_', '+'];
     for (let char of title) {
         if (special.includes(char)) {
-            messageDiv.innerHTML = 'Название не может содержать специальные символы (!@#%*)';
+            messageDiv.innerHTML = 'The product name cannot contain special characters (!@#%*).';
             messageDiv.className = 'message error';
             return;
         }
     }
-    
+
     const price = parseFloat(formData.get('price'));
     if (price < 100) {
-        messageDiv.innerHTML = 'Слишком маленькая стоимость';
+        messageDiv.innerHTML = 'The price is too low.';
         messageDiv.className = 'message error';
         return;
     }
-    
+
     const image = formData.get('image');
-    if (image.size > 10 * 1024 * 1024) {
-        messageDiv.innerHTML = 'Картинка не может весить больше 10 МБ';
+    if (image && image.size > 10 * 1024 * 1024) {
+        messageDiv.innerHTML = 'The image cannot be larger than 10 MB.';
         messageDiv.className = 'message error';
         return;
     }
-    
-    messageDiv.innerHTML = 'Добавление товара...';
-    messageDiv.className = 'message';
-    
+
+    messageDiv.innerHTML = 'Adding product…';
+    messageDiv.className = 'message loading';
+
     try {
         const response = await fetch('/shop/api/products/create/', {
             method: 'POST',
@@ -113,15 +109,16 @@ async function addProduct() {
             },
             body: formData
         });
-        
         const data = await response.json();
-        
         if (response.ok) {
             window.location.href = '/shop/products/';
-        }}
-        
-    catch (error) {
-        alert('Ошибка')
+        } else {
+            messageDiv.innerHTML = data.detail || 'Could not add the product.';
+            messageDiv.className = 'message error';
+        }
+    } catch (error) {
+        messageDiv.innerHTML = 'Connection error.';
+        messageDiv.className = 'message error';
     }
 }
 </script>

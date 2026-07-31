@@ -1,59 +1,45 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %} Вход {% endblock %}
-{% block link %}
-<link rel="stylesheet" href="{% static 'css2/style2.css' %}">
-{% endblock %}
+{% block title %}Sign in — Qadam Market{% endblock %}
+{% block link %}<link rel="stylesheet" href="{% static 'css2/auth.css' %}">{% endblock %}
 {% block content %}
-
-<div class="page-center">
-    <div class="container">
-        <h1>Вход в систему</h1>
-        
-        <form id="SignInForm">
-            {% csrf_token %}
-            <div>
-                <input type="text" name="username" placeholder="Имя пользователя" required>
-            </div>
-            <div>
-                <input type="password" name="password" placeholder="Пароль" required>
-            </div>
-            
-            <button type="button" onclick="SignIn()">Войти</button>
-            
-            <li style="display: flex; justify-content: center;">Еще нет аккаунта?</li>
-            <li style="display: flex; justify-content: center;"><a href="{% url 'users:signup_page' %}">Зарегестрироваться</a></li>
-        </form>
-        
-        <div id="message" style="margin-top: 15px; text-align: center;"></div>
+<section class="auth-layout">
+    <aside class="auth-aside">
+        <a class="auth-aside__brand" href="{% url 'shop:products_list' %}">qadam<span>market</span></a>
+        <div class="auth-aside__content">
+            <p class="auth-kicker">Welcome back</p>
+            <h1>Your shopping<br>in one place</h1>
+            <p>Sign in to keep shopping, track orders, and save favorites.</p>
+        </div>
+        <div class="auth-aside__note"><span>✓</span><div><b>Simple and secure</b><small>Your account details are protected</small></div></div>
+        <div class="auth-shape auth-shape--one"></div><div class="auth-shape auth-shape--two"></div>
+    </aside>
+    <div class="auth-card-wrap">
+        <section class="auth-card" aria-labelledby="signin-title">
+            <div class="auth-card__head"><p class="auth-overline">Account</p><h2 id="signin-title">Sign in</h2><p>Enter the details you used when registering.</p></div>
+            <form id="SignInForm" class="auth-form">
+                {% csrf_token %}
+                <label class="auth-field"><span>Username</span><input type="text" name="username" placeholder="Enter your username" autocomplete="username" required></label>
+                <label class="auth-field"><span>Password</span><input type="password" name="password" placeholder="Enter your password" autocomplete="current-password" required></label>
+                <button id="signinButton" type="submit" class="auth-submit">Sign in <span>→</span></button>
+                <div id="message" class="auth-message" role="status" aria-live="polite"></div>
+            </form>
+            <p class="auth-switch">Don't have an account? <a href="{% url 'users:signup_page' %}">Create one</a></p>
+        </section>
     </div>
-</div>
-
+</section>
 <script>
-async function SignIn() {
-    const form = document.getElementById('SignInForm');
-    const formData = new FormData(form);
-    const messageDiv = document.getElementById('message');
-    
+document.getElementById('SignInForm').addEventListener('submit', async event => {
+    event.preventDefault();
+    const form = event.currentTarget, message = document.getElementById('message'), button = document.getElementById('signinButton');
+    button.disabled = true; button.innerHTML = 'Signing in…'; message.textContent = '';
     try {
-        const response = await fetch('/users/api/signin/', {
-            method: 'POST',
-            body: formData
-        });
-        
+        const response = await fetch('/users/api/signin/', {method:'POST', body:new FormData(form)});
         const data = await response.json();
-        
-        if (response.ok) {
-            window.location.href = '{% url "shop:products_list" %}';
-        } else {
-            messageDiv.innerHTML = 'Неверные данные'
-        }
-    }
-    catch(error) {
-        messageDiv.innerHTML = '<p style="color: #FF6D9A;">✗ Ошибка соединения</p>';
-        console.error('Error:', error);
-    }
-}
+        if (response.ok) window.location.href = '{% url "shop:products_list" %}';
+        else { message.textContent = data.detail || 'Check your username and password.'; message.className = 'auth-message is-error'; }
+    } catch (error) { message.textContent = 'Could not connect to the server. Please try again.'; message.className = 'auth-message is-error'; }
+    finally { button.disabled = false; button.innerHTML = 'Sign in <span>→</span>'; }
+});
 </script>
-
 {% endblock %}

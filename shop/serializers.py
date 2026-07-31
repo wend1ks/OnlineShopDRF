@@ -28,12 +28,12 @@ class ProductSerializer(serializers.ModelSerializer):
     
     def validate_price(self, value):
         if value <= 0:
-            raise serializers.ValidationError("Цена должна быть больше 0")
+            raise serializers.ValidationError("Price must be greater than 0.")
         return value
     
     def validate_stock_units(self, value):
         if value < 0:
-            raise serializers.ValidationError("Количество не может быть отрицательным")
+            raise serializers.ValidationError("Quantity cannot be negative.")
         return value
 
 
@@ -51,7 +51,7 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
         if request and request.method == 'POST':
             if 'seller' not in data:
                 raise serializers.ValidationError({
-                    "seller": "Продавец обязателен"
+                    "seller": "Seller is required."
                 })
         return data
 
@@ -125,7 +125,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         
         cart_items = CartItem.objects.filter(user=user)
         if not cart_items.exists():
-            raise serializers.ValidationError("Корзина пуста")
+            raise serializers.ValidationError("Your cart is empty.")
         
         total_price = sum(item.line_total() for item in cart_items)
         if total_price > 999999.99:

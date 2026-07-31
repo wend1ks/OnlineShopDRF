@@ -1,64 +1,56 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %} {{ product.title }} {% endblock %}
-
+{% block title %}{{ product.title|default:'Product' }}{% endblock %}
 {% block link %}
 <link rel="stylesheet" href="{% static 'css/product_detail.css' %}">
 {% endblock %}
-
 {% block content %}
-<div class="product-detail">
-    <!-- <div class="image-box">
-        <img src="{{ product.image.url }}" alt="{{ product.title }}">
-    </div> -->
-
-    <!-- <div class="info-box">
-        <h1>{{ product.title }}</h1>
-        <p class="price">{{ product.price }} Тг</p>
-        <p class="desc">{{ product.description }}</p>
-        <p class="seller">Продавец: {{ product.seller }}</p>
-        <p class="count">Осталось: {{ product.stock_units }} шт</p>
-        <a href="{% url 'shop:products_list' %}" class="btn-back">Назад к товарам</a>
-    </div> -->
-    
-    
-</div>
+<section class="product-detail">
+    <div class="product-image">
+        <img id="productImage" src="/static/images/no-image.png" alt="Product image">
+    </div>
+    <div class="product-detail-info">
+        <h1 id="productTitle">Loading...</h1>
+        <div class="price" id="productPrice"></div>
+        <p class="desc" id="productDescription"></p>
+        <div class="meta">
+            <div>Category: <span id="productCategory">—</span></div>
+            <div>In stock: <span id="productStock">—</span></div>
+        </div>
+        <div class="card-footer">
+            <a class="btn btn-secondary btn-back" href="/shop/products/">Back to catalog</a>
+        </div>
+    </div>
+</section>
 <script>
 const productId = window.location.pathname.split('/').filter(Boolean).pop();
 
 async function ProductDetail() {
-    const container = document.querySelector('.product-detail');
-    
-    try {        
+    const imageElement = document.getElementById('productImage');
+    const titleElement = document.getElementById('productTitle');
+    const priceElement = document.getElementById('productPrice');
+    const descriptionElement = document.getElementById('productDescription');
+    const categoryElement = document.getElementById('productCategory');
+    const stockElement = document.getElementById('productStock');
+
+    try {
         const response = await fetch(`/shop/api/products/${productId}/`);
-        product = await response.json();
-        
-        console.log('Product:', product);
-        
-        container.innerHTML = '';
-        
-        const card = document.createElement('div');
-        card.className = 'card';
-        
-        card.innerHTML = `
-            <img src="${product.image || '/static/images/no-image.png'}" 
-                 alt="${product.title || 'Product image'}" 
-                 width="350" height="250"
-                 style="object-fit: cover;"
-                 onerror="this.src='/static/images/no-image.png'">
-            <h3>${product.title}</h3>
-            <p>${product.description}</p>
-            <p class="price">${product.price} Тг</p>
-            <p class="count">Осталось: ${product.stock_units} шт</p>
-            <a class="btn-back" href="/shop/products/">Назад</a>
-        `;
-        
-        container.appendChild(card);
-        
-    } catch(error) {
+        const product = await response.json();
+        imageElement.src = product.image || '/static/images/no-image.png';
+        imageElement.alt = product.title || 'Product image';
+        titleElement.textContent = product.title || 'Untitled product';
+        priceElement.textContent = new Intl.NumberFormat('en-US', {style:'currency', currency:'USD'}).format(Number(product.price || 0));
+        descriptionElement.textContent = product.description || 'No description available.';
+        categoryElement.textContent = product.category || '—';
+        stockElement.textContent = product.stock_units || 0;
+    } catch (error) {
         console.error(error);
+        titleElement.textContent = 'Could not load product';
+        descriptionElement.textContent = 'Please try refreshing the page.';
     }
 }
-    ProductDetail()
+
+ProductDetail();
 </script>
 {% endblock %}
+

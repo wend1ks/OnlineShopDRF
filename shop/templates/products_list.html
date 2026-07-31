@@ -1,90 +1,100 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %} Список продуктов {% endblock %}
-{% block link %} 
-<link rel="stylesheet" href="{% static 'css/style.css' %}">
-{% endblock %}
-
-{% block content %} 
-
-    <div class="container" style="max-width: 1200px;">        
-        <div id="productsContainer" style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
+{% block title %}Catalog — Qadam Market{% endblock %}
+{% block link %}<link rel="stylesheet" href="{% static 'css/style.css' %}">{% endblock %}
+{% block content %}
+<section class="catalog-hero">
+    <div class="hero-copy">
+        <p class="eyebrow"><span class="eyebrow-dot"></span> Today's picks</p>
+        <h1>Shopping that<br><span>brightens every day</span></h1>
+        <p class="hero-description">Find what you need, save time, and check out in just a few minutes.</p>
+        <div class="hero-actions">
+            <button class="hero-primary" type="button" onclick="document.querySelector('.catalog-toolbar')?.scrollIntoView({behavior: 'smooth'})">Browse catalog <span>→</span></button>
+            <a class="hero-secondary" href="#popular">Trending today</a>
         </div>
     </div>
-
-
+    <div class="hero-visual" aria-hidden="true">
+        <div class="hero-orbit hero-orbit--one"></div><div class="hero-orbit hero-orbit--two"></div>
+        <div class="hero-card hero-card--main"><span class="hero-card__icon">✦</span><strong>Great value</strong><small>prices every day</small></div>
+        <div class="hero-card hero-card--small"><span>⚡</span><b>Fast<br>checkout</b></div>
+        <div class="hero-discount">up to <strong>−30%</strong><small>on weekly picks</small></div>
+    </div>
+</section>
+<section class="catalog-toolbar" aria-label="Catalog controls">
+    <div id="categoryFilters" class="category-filters"><button class="filter-chip is-active" data-category="">All products</button></div>
+    <label class="sort-control">Sort <select id="sortProducts"><option value="default">recommended</option><option value="price-asc">price: low to high</option><option value="price-desc">price: high to low</option></select></label>
+</section>
+<div class="catalog-heading" id="popular"><div><h2>Trending now</h2><p id="productsCount">Loading products…</p></div></div>
+<div id="productsContainer" class="product-grid marketplace-grid" aria-live="polite"></div>
 <script>
+let allProducts = [];
+let activeCategory = '';
+const escapeText = value => String(value || '').replace(/[&<>'"]/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[character]));
+const money = value => new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD', maximumFractionDigits: 2}).format(Number(value || 0));
+
+function renderProducts() {
+    const container = document.getElementById('productsContainer');
+    const query = (document.getElementById('globalSearch')?.value || '').trim().toLowerCase();
+    const sort = document.getElementById('sortProducts').value;
+    let products = allProducts.filter(product => {
+        const haystack = [product.title, product.description, product.category_name].join(' ').toLowerCase();
+        return (!activeCategory || product.category_name === activeCategory) && (!query || haystack.includes(query));
+    });
+    if (sort === 'price-asc') products.sort((a, b) => Number(a.price) - Number(b.price));
+    if (sort === 'price-desc') products.sort((a, b) => Number(b.price) - Number(a.price));
+    document.getElementById('productsCount').textContent = `Found: ${products.length}`;
+    if (!products.length) { container.innerHTML = '<div class="catalog-empty">No products found. Try changing your search or category.</div>'; return; }
+    container.innerHTML = products.map(product => `
+        <article class="market-product">
+            <a class="market-product__image" href="/shop/product/${product.id}/"><img src="${escapeText(product.image || '/static/images/no-image.png')}" alt="${escapeText(product.title || 'Product')}" loading="lazy"><span class="product-badge">${product.stock_units > 0 ? 'In stock' : 'Pre-order'}</span></a>
+            <button class="favorite-button" type="button" aria-label="Add to favorites" onclick="this.classList.toggle('is-favorite')">♡</button>
+            <div class="market-product__info"><div class="market-product__price">${money(product.price)}</div><a class="market-product__title" href="/shop/product/${product.id}/">${escapeText(product.title)}</a><p class="market-product__meta">${escapeText(product.category_name || 'Catalog')} · ${product.stock_units > 0 ? `${product.stock_units} left` : 'availability on request'}</p><button class="add-cart-button ${product.in_cart ? 'in-cart' : ''}" type="button" onclick="toggleCart(${product.id})">${product.in_cart ? '✓ In cart' : 'Add to cart'}</button></div>
+        </article>`).join('');
+}
+
+function buildCategories() {
+    const categories = [...new Set(allProducts.map(product => product.category_name).filter(Boolean))];
+    const filters = document.getElementById('categoryFilters');
+    filters.insertAdjacentHTML('beforeend', categories.map(category => `<button class="filter-chip" data-category="${escapeText(category)}">${escapeText(category)}</button>`).join(''));
+    filters.addEventListener('click', event => {
+        const button = event.target.closest('.filter-chip');
+        if (!button) return;
+        activeCategory = button.dataset.category;
+        filters.querySelectorAll('.filter-chip').forEach(chip => chip.classList.toggle('is-active', chip === button));
+        renderProducts();
+    });
+}
+
 async function loadProducts() {
+    const container = document.getElementById('productsContainer');
     try {
         const response = await fetch('/shop/api/products/');
-        const products = await response.json();
-        
-        const container = document.getElementById('productsContainer');
-
-        container.innerHTML = '';
-        
-        products.forEach(product => {
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.style.width = '400px';
-            
-            card.innerHTML = `
-                <img src="${product.image || ''}" alt="" width="400px" height="300px" 
-                     onerror="this.src='/static/images/no-image.png'">
-                <h1>${product.title}</h1>
-                <p class="desc">${product.description || 'Нет описания'}</p>
-                <p class="price">${product.price} Тг</p>
-                <a class="btn" href="/shop/product/${product.id}/">Детали товара</a>
-                <button class="btn" onclick="toggleCart(${product.id})">
-                    ${product.in_cart ? 'Убрать из корзины' : 'В корзину'}
-                </button>
-            `;
-            
-            container.appendChild(card);
-        });
-        
+        if (!response.ok) throw new Error('Products request failed');
+        allProducts = await response.json();
+        buildCategories();
+        renderProducts();
     } catch (error) {
         console.error('Error:', error);
-        document.getElementById('loading').innerHTML = 'Ошибка загрузки';
+        document.getElementById('productsCount').textContent = 'Catalog temporarily unavailable';
+        container.innerHTML = '<div class="catalog-empty">Could not load products. Please refresh the page.</div>';
     }
 }
 
 function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
+    const value = document.cookie.split(';').map(item => item.trim()).find(item => item.startsWith(name + '='));
+    return value ? decodeURIComponent(value.split('=').slice(1).join('=')) : null;
 }
 
 async function toggleCart(productId) {
-    const csrftoken = getCookie('csrftoken');
-    
     try {
-        const response = await fetch(`/shop/api/cart/toggle/${productId}/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrftoken
-            }
-        });
-        
-        if (response.ok) {
-            loadProducts();
-        } else if (response.status === 403) {
-            window.location.href = '/users/signin/';
-        }
-    } catch (error) {
-        console.error('Error:', error);
-    }
+        const response = await fetch(`/shop/api/cart/toggle/${productId}/`, {method:'POST', headers:{'X-CSRFToken':getCookie('csrftoken')}});
+        if (response.ok) { loadProducts(); }
+        else if (response.status === 403) { window.location.href = '/users/signin/'; }
+    } catch (error) { console.error('Error:', error); }
 }
 
-loadProducts()
+document.getElementById('globalSearch')?.addEventListener('input', renderProducts);
+document.getElementById('sortProducts').addEventListener('change', renderProducts);
+loadProducts();
 </script>
 {% endblock %}

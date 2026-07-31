@@ -50,7 +50,7 @@ class ProductCreateAPIView(APIView):
     
     def post(self, request):
         if not request.user.is_seller():
-            return Response({'error': 'Только продавцы могут добавлять товары'},status=403)
+            return Response({'error': 'Only sellers can add products'},status=403)
 
         seller, created = Seller.objects.get_or_create(user=request.user)
         
@@ -110,7 +110,7 @@ class UpdateQuantityAPIView(APIView):
         if action == 'plus':
             if cart_item.quantity >= product.stock_units:
                 return Response(
-                    {'error': f'В наличии только {product.stock_units} ед.'},status=400)
+                    {'error': f'Only {product.stock_units} item(s) are in stock.'},status=400)
             cart_item.quantity += 1
             cart_item.save()
             
@@ -135,7 +135,7 @@ class CreateOrderView(APIView):
     def post(self, request):
         cart_items = CartItem.objects.filter(user=request.user)
         if not cart_items.exists():
-            return Response({'error': 'Корзина пуста'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Your cart is empty'}, status=status.HTTP_400_BAD_REQUEST)
         
         total_price = sum(item.line_total() for item in cart_items)
 
@@ -170,7 +170,7 @@ class CreateCheckoutSessionView(APIView):
                 'currency': 'rub',
                 'unit_amount': int(order.total_price * 100),
                 'product_data': {
-                    'name': f"Заказ №{order.id}",
+                    'name': f"Order #{order.id}",
                 }
             },
             'quantity': 1
@@ -217,7 +217,7 @@ class StripeSuccessView(APIView):
                 return Response({
                     'success': True,
                     'order_id': order.id,
-                    'status': 'PAID'
+                    'status': 'PAID'    
                 })
             else:
                 return Response({
@@ -236,7 +236,7 @@ class StripeCancelView(APIView):
             'success': False,
             'order_id': order.id,
             'status': order.status,
-            'message': 'Платеж отменен'
+            'message': 'Payment cancelled'
         })
 
 class OrderStatusView(APIView):
@@ -280,6 +280,8 @@ def products_list_page(request):
     if not request.user.is_authenticated:
         return redirect('users:signin_page')
     return render(request, 'products_list.html')
+
+
 
 def add_product_page(request):
     if not request.user.is_authenticated:

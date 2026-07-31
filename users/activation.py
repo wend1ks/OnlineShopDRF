@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import timedelta
-
+    
 from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone

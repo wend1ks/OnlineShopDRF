@@ -1,100 +1,18 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %} Редактирование профиля {% endblock %}
-{% block link %}
-<link rel="stylesheet" href="{% static 'css2/style.css' %}">
-{% endblock %}
+{% block title %}Profile — Qadam Market{% endblock %}
+{% block link %}<link rel="stylesheet" href="{% static 'css2/account.css' %}">{% endblock %}
 {% block content %}
-
-<div class="page-center">
-    <div class="container">        
-        <form id="profileForm" enctype="multipart/form-data">
-            {% csrf_token %}
-            
-            {% if user.user_image %}
-            <div class="profile-image-box">
-                <img src="{{ user.user_image.url }}" alt="Аватар" class="profile-image">
-            </div>
-            {% endif %}
-            
-            <div>
-                <label>Имя пользователя:</label>
-                <input type="text" name="username" value="{{ user.username }}" required>
-            </div>
-            
-            <div>
-                <label>Имя:</label>
-                <input type="text" name="first_name" value="{{ user.first_name }}">
-            </div>
-            <div>
-                <label>Фамилия:</label>
-                <input type="text" name="last_name" value="{{ user.last_name }}">
-            </div>
-            <div>
-                <label>Телефон:</label>
-                <input type="text" name="phone_number" value="{{ user.phone_number }}">
-            </div>
-            <div>
-                <label>Аватар:</label>
-                <label class="file-btn">
-                    Выбрать файл
-                    <input type="file" name="user_image" accept="image/*">
-                </label>
-
-            </div>
-            
-            <div>
-                <label>Email:</label>
-                <input type="email" value="{{ user.email }}" disabled>
-                <small>Email нельзя изменить</small>
-            </div>
-            
-            <button type="button" onclick="updateProfile()">Сохранить изменения</button>
-        </form>
-        
-        <div id="message"></div>
+<section class="profile-page">
+    <div class="profile-head"><div><p class="profile-kicker">Account</p><h1>My profile</h1><p>Manage your personal account details.</p></div><a href="{% url 'shop:products_list' %}" class="profile-back">← Catalog</a></div>
+    <div class="profile-layout">
+        <aside class="profile-summary"><div class="profile-avatar" id="avatarPreview">{% if user.user_image %}<img src="{{ user.user_image.url }}" alt="Avatar for {{ user.username }}">{% else %}<span>{{ user.username|slice:':1'|upper }}</span>{% endif %}</div><h2>{{ user.first_name|default:user.username }} {{ user.last_name }}</h2><p>{{ user.email }}</p><span class="profile-role">{% if user.is_seller %}Seller{% else %}Customer{% endif %}</span><div class="profile-summary__hint"><span>✓</span> Email verified</div></aside>
+        <section class="profile-card"><div class="profile-card__head"><h2>Personal details</h2><p>Update your information and save the changes.</p></div><form id="profileForm" class="profile-form" enctype="multipart/form-data">{% csrf_token %}<div class="profile-form__grid"><label class="account-field"><span>Username</span><input type="text" name="username" value="{{ user.username }}" required></label><label class="account-field"><span>Phone</span><input type="tel" name="phone_number" value="{{ user.phone_number }}" required></label><label class="account-field"><span>First name</span><input type="text" name="first_name" value="{{ user.first_name }}"></label><label class="account-field"><span>Last name</span><input type="text" name="last_name" value="{{ user.last_name }}"></label></div><label class="account-field"><span>Email</span><input type="email" value="{{ user.email }}" disabled><small>Your email address cannot be changed.</small></label><label class="profile-photo-picker"><input id="photoInput" type="file" name="user_image" accept="image/*"><span>＋</span><div><b>Change photo</b><small>JPG, PNG, or WEBP</small></div></label><div class="profile-actions"><button id="profileButton" class="account-primary" type="submit">Save changes <span>→</span></button><div id="profileMessage" class="account-message" role="status" aria-live="polite"></div></div></form></section>
     </div>
-</div>
-
+</section>
 <script>
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
-async function updateProfile() {
-    const form = document.getElementById('profileForm');
-    const formData = new FormData(form);
-    const csrftoken = getCookie('csrftoken');
-    
-    try {
-        const response = await fetch('/users/api/profile/update/', {
-            method: 'PATCH',
-            headers: {
-                'X-CSRFToken': csrftoken 
-            },
-            body: formData
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            document.getElementById('message').innerHTML = 'Профиль сохранен'
-        }
-    } catch (error) {
-        alert(data.error)
-    }
-}
+const getCookie = name => { const value = document.cookie.split(';').map(part => part.trim()).find(part => part.startsWith(name + '=')); return value ? decodeURIComponent(value.split('=').slice(1).join('=')) : null; };
+document.getElementById('photoInput').addEventListener('change', event => { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = load => { document.getElementById('avatarPreview').innerHTML = `<img src="${load.target.result}" alt="New avatar">`; }; reader.readAsDataURL(file); });
+document.getElementById('profileForm').addEventListener('submit', async event => { event.preventDefault(); const form = event.currentTarget, message = document.getElementById('profileMessage'), button = document.getElementById('profileButton'), data = new FormData(form); data.delete('csrfmiddlewaretoken'); button.disabled = true; button.innerHTML = 'Saving…'; message.textContent = ''; try { const response = await fetch('/users/api/profile/update/', {method:'PATCH', headers:{'X-CSRFToken':getCookie('csrftoken')}, body:data}); const result = await response.json(); if (response.ok) { message.textContent = 'Changes saved.'; message.className = 'account-message is-success'; } else { message.textContent = Object.values(result).flat().join(' ') || 'Could not save changes.'; message.className = 'account-message is-error'; } } catch { message.textContent = 'Could not connect to the server.'; message.className = 'account-message is-error'; } finally { button.disabled = false; button.innerHTML = 'Save changes <span>→</span>'; } });
 </script>
-
 {% endblock %}

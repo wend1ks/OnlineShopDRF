@@ -14,13 +14,13 @@ class ProductForm(forms.ModelForm):
         image = self.cleaned_data.get('image')
         max_size = 10 * 1024 * 1024
         if image.size >= max_size:
-            raise ValidationError('Картинка не может весить больше 10 МБ')
+            raise ValidationError('The image cannot be larger than 10 MB.')
         return image
         
     def clean_price(self):  
         price = self.cleaned_data.get('price')
         if price < 100:
-            raise ValidationError('Слишком маленькая стоимость')
+            raise ValidationError('The price is too low.')
         return price
     
     def clean_title(self):
@@ -28,6 +28,6 @@ class ProductForm(forms.ModelForm):
         special = ['!', '@', '$', "#", '%', '^', '&', '*', '(', ')', '_', '+']
         for char in title:
             if char in special:
-                raise forms.ValidationError('Название не может содержать специальные символы (!@#%*)')
+                raise forms.ValidationError('The product name cannot contain special characters (!@#%*).')
         return title
     

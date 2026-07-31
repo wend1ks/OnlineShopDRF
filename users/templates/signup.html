@@ -1,75 +1,54 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %} Регистрация {% endblock %}
-{% block link %}
-<link rel="stylesheet" href="{% static 'css2/style3.css' %}">
-{% endblock %}
+{% block title %}Sign up — Qadam Market{% endblock %}
+{% block link %}<link rel="stylesheet" href="{% static 'css2/auth.css' %}">{% endblock %}
 {% block content %}
-<div class="container">
-    <h1>Регистрация</h1>
-    <div class="form-field">
-        <form id="signupForm" enctype="multipart/form-data">
-            {% csrf_token %}
-            <input type="text" name="username" class="input-field" placeholder="Имя пользователя" required>
-            
-            <input type="text" name="first_name" class="input-field" placeholder="Имя" required>
-            <input type="text" name="last_name" class="input-field" placeholder="Фамилия" required>
-            <input type="email" name="email" class="input-field" placeholder="Email" required>
-            <input type="text" name="phone_number" class="input-field" placeholder="Номер телефона" required>
-            <input type="file" name="user_image" class="file-input" accept="image/*">
-            
-            <div class="role-selection">
-                <label>
-                    <input type="radio" name="role" value="customer" checked>
-                    Покупатель
-                </label>
-                <label>
-                    <input type="radio" name="role" value="seller">
-                    Продавец
-                </label>
-            </div>
-            
-            <input type="password" name="password" class="input-field" placeholder="Пароль" required minlength="8">
-            <input type="password" name="password2" class="input-field" placeholder="Подтвердите пароль" required>
-            
-            <button type="button" onclick="signUp()" class="submit-btn">Зарегистрироваться</button>
-            
-        </form>
-        
-        <div id="message" class="message"></div>
+<section class="auth-layout auth-layout--signup">
+    <aside class="auth-aside">
+        <a class="auth-aside__brand" href="{% url 'shop:products_list' %}">qadam<span>market</span></a>
+        <div class="auth-aside__content"><p class="auth-kicker">New account</p><h1>Start<br>shopping smarter</h1><p>Create an account to place and manage orders in one place.</p></div>
+        <div class="auth-steps"><span class="is-current">1</span><i></i><span>2</span><i></i><span>3</span><b>Sign up · Verify · Done</b></div>
+        <div class="auth-shape auth-shape--one"></div><div class="auth-shape auth-shape--two"></div>
+    </aside>
+    <div class="auth-card-wrap">
+        <section class="auth-card auth-card--wide" aria-labelledby="signup-title">
+            <div class="auth-card__head"><p class="auth-overline">Account</p><h2 id="signup-title">Create an account</h2><p>We'll email you a verification code after you sign up.</p></div>
+            <form id="signupForm" class="auth-form" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="auth-fields-grid">
+                    <label class="auth-field"><span>Username</span><input type="text" name="username" placeholder="For example, alex_01" autocomplete="username" required></label>
+                    <label class="auth-field"><span>Phone</span><input type="tel" name="phone_number" placeholder="+1 202 555 0123" autocomplete="tel" required></label>
+                    <label class="auth-field"><span>First name</span><input type="text" name="first_name" placeholder="Your first name" autocomplete="given-name" required></label>
+                    <label class="auth-field"><span>Last name</span><input type="text" name="last_name" placeholder="Your last name" autocomplete="family-name" required></label>
+                </div>
+                <label class="auth-field"><span>Email</span><input type="email" name="email" placeholder="name@example.com" autocomplete="email" required></label>
+                <div class="auth-fields-grid">
+                    <label class="auth-field"><span>Password</span><input type="password" name="password" placeholder="At least 8 characters" autocomplete="new-password" minlength="8" required></label>
+                    <label class="auth-field"><span>Confirm password</span><input type="password" name="password2" placeholder="Repeat your password" autocomplete="new-password" minlength="8" required></label>
+                </div>
+                <fieldset class="role-picker"><legend>What will you use your account for?</legend><label><input type="radio" name="role" value="customer" checked><span><b>Customer</b><small>Buy products</small></span></label><label><input type="radio" name="role" value="seller"><span><b>Seller</b><small>List products</small></span></label></fieldset>
+                <label class="photo-picker"><input type="file" name="user_image" accept="image/*"><span>＋</span><b>Add a photo</b><small>Optional</small></label>
+                <button id="signupButton" type="submit" class="auth-submit">Create account <span>→</span></button>
+                <div id="message" class="auth-message" role="status" aria-live="polite"></div>
+            </form>
+            <p class="auth-switch">Already have an account? <a href="{% url 'users:signin_page' %}">Sign in</a></p>
+        </section>
     </div>
-</div>
-
+</section>
 <script>
-async function signUp() {
-    const form = document.getElementById('signupForm');
-    const formData = new FormData(form);
-    
-    const messageDiv = document.getElementById('message');
-    messageDiv.innerHTML = '<p>Регистрация...</p>';
-    messageDiv.className = 'message loading';
-    
+const errorText = value => typeof value === 'string' ? value : Object.values(value || {}).flat().join(' ') || 'Could not create your account.';
+document.getElementById('signupForm').addEventListener('submit', async event => {
+    event.preventDefault();
+    const form = event.currentTarget, message = document.getElementById('message'), button = document.getElementById('signupButton');
+    if (form.password.value !== form.password2.value) { message.textContent = 'Passwords do not match.'; message.className = 'auth-message is-error'; return; }
+    button.disabled = true; button.innerHTML = 'Creating account…'; message.textContent = '';
     try {
-        const response = await fetch('http://127.0.0.1:8000/users/api/signup/', {
-            method: 'POST',
-            body: formData,
-        }); 
-        const data = await response.json();        
-        if (response.ok) {
-            messageDiv.innerHTML = `
-                <p class="success">${data.message}</p>
-                <p>Переход на страницу верификации...</p>
-            `;
-            messageDiv.className = 'message success';
-            
-            window.location.href = 'http://127.0.0.1:8000/users/verify-code/';            
-        }
-    } catch (error) {
-        console.error('Fetch error:', error);
-        messageDiv.innerHTML = `<p class="error">Ошибка соединения: ${error.message}</p>`;
-        messageDiv.className = 'message error';
-    }
-}
+        const response = await fetch('/users/api/signup/', {method:'POST', body:new FormData(form)});
+        const data = await response.json();
+        if (response.ok) window.location.href = '/users/verify-code/';
+        else { message.textContent = errorText(data.errors || data.detail); message.className = 'auth-message is-error'; }
+    } catch (error) { message.textContent = 'Could not connect to the server. Please try again.'; message.className = 'auth-message is-error'; }
+    finally { button.disabled = false; button.innerHTML = 'Create account <span>→</span>'; }
+});
 </script>
-
 {% endblock %}
