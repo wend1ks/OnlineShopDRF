@@ -47,7 +47,7 @@ class VerifyCodeAPIView(APIView):
         code = serializer.validated_data["code"]
         
         user = CustomUser.objects.filter(email=email).order_by('-date_joined').first()
-        
+        print("VerifyCodeAPIView: user found:", user)
         if not user:
             return Response({'detail': 'No user found with this email address.'}, status=400)
 
