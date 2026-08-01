@@ -1,19 +1,25 @@
-from celery import shared_task
+from django.conf import settings
 from django.core.mail import send_mail
+from celery import shared_task
 
 
 @shared_task
 def send_activation_email_task(user_email, username, code):
-    subject = "Ваш код подтверждения"
-    message = f"""Привет {username}!
-Ваш код подтверждения: {code}
-Действителен 15 минут."""
+    subject = "Код подтверждения"
+
+    message = f"""
+Здравствуйте, {username}!
+
+Ваш код подтверждения:
+
+{code}
+
+Код действует 15 минут.
+"""
 
     send_mail(
         subject,
         message,
-        None,
+        settings.DEFAULT_FROM_EMAIL,
         [user_email],
     )
-
-    return f"Email sent to {user_email}"

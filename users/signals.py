@@ -4,15 +4,37 @@ from django.dispatch import receiver
 from django.db import transaction
 from .models import CustomUser
 from .activation import create_activation_for_user
-from .tasks import send_activation_email_task
+from django.core.mail import send_mail
+from django.conf import settings
 
 def send_activation_code(user):
-    """Создаёт код в Redis и отправляет email через Celery после коммита транзакции."""
+    """Создаёт код в Redis и отправляет email синхронно после коммита транзакции."""
 
     raw_code = create_activation_for_user(user)
 
     def _after_commit():
-        send_activation_email_task.delay(user.email, user.username, raw_code)
+        subject = "Код подтверждения"
+        message = f"""
+Здравствуйте, {user.username}!
+
+Ваш код подтверждения:
+
+{raw_code}
+
+Код действует 15 минут.
+"""
+        try:
+            result = send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+            )
+            # result == number of successfully delivered messages (recipients)
+            print(f"send_activation_email: sent={result}, to={user.email}, from={settings.DEFAULT_FROM_EMAIL}, host={getattr(settings, 'EMAIL_HOST', None)}, port={getattr(settings, 'EMAIL_PORT', None)}")
+        except Exception as e:
+            # Print exception to platform logs to aid debugging (no sensitive data like passwords)
+            print(f"send_activation_email: failed to send to {user.email}: {e}")
 
     transaction.on_commit(_after_commit)
     return raw_code
