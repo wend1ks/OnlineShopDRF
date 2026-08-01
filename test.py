@@ -1,11 +1,8 @@
-
-# def check_stroke(func):
-#     def wrapper(*args, **kwargs):
-            
-#         return func(*args, **kwargs)
-#     return wrapper
-
-def stroke(s):
-    print(s)
-
-stroke(120)
+import socket, sys
+try:
+    s = socket.create_connection(("smtp-relay.brevo.com", 587), timeout=10)
+    print("OK: connected")
+    s.close()
+except Exception as e:
+    print("ERR:", e)
+sys.exit(1)
