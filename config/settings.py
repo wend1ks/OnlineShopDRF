@@ -182,3 +182,5 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 
+print("REDIS_URL =", os.getenv("REDIS_URL"))
+print("DATABASE_URL =", os.getenv("DATABASE_URL"))
