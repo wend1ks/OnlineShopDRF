@@ -6,6 +6,7 @@ from .models import CustomUser
 from .activation import create_activation_for_user
 from django.core.mail import send_mail
 from django.conf import settings
+import threading
 
 def send_activation_code(user):
     """Создаёт код в Redis и отправляет email синхронно после коммита транзакции."""
@@ -23,18 +24,23 @@ def send_activation_code(user):
 
 Код действует 15 минут.
 """
-        try:
-            result = send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-            )
-            # result == number of successfully delivered messages (recipients)
-            print(f"send_activation_email: sent={result}, to={user.email}, from={settings.DEFAULT_FROM_EMAIL}, host={getattr(settings, 'EMAIL_HOST', None)}, port={getattr(settings, 'EMAIL_PORT', None)}")
-        except Exception as e:
-            # Print exception to platform logs to aid debugging (no sensitive data like passwords)
-            print(f"send_activation_email: failed to send to {user.email}: {e}")
+        def _send():
+            try:
+                result = send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                )
+                # result == number of successfully delivered messages (recipients)
+                print(f"send_activation_email: sent={result}, to={user.email}, from={settings.DEFAULT_FROM_EMAIL}, host={getattr(settings, 'EMAIL_HOST', None)}, port={getattr(settings, 'EMAIL_PORT', None)}")
+            except Exception as e:
+                # Print exception to platform logs to aid debugging (no sensitive data like passwords)
+                print(f"send_activation_email: failed to send to {user.email}: {e}")
+
+        # Run email sending in a background daemon thread to avoid blocking the web worker
+        t = threading.Thread(target=_send, daemon=True)
+        t.start()
 
     transaction.on_commit(_after_commit)
     return raw_code
@@ -43,4 +49,4 @@ def send_activation_code(user):
 @receiver(post_save, sender=CustomUser)
 def check_registration(sender, instance, created, **kwargs):
     if created:
-        send_activation_code(instance)
+        send_activation_code(instance)  
